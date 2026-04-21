@@ -7,89 +7,90 @@
     <style>
         :root { 
             --red-a: #c0333a; 
-            --blue-rer: #0055c8;
-            --dark: #222; 
+            --dark: #000000;
             --yellow: #fbc02d; 
+            --bg-page: #f5f5f5;
         }
-        body { background: #f5f5f5; font-family: 'Cabin', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { background: var(--bg-page); font-family: 'Cabin', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* HEADER AVEC LOGOS */
-        header { background: white; padding: 10px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 8px solid var(--red-a); }
+        header { background: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 8px solid var(--red-a); }
         
         .header-left { display: flex; align-items: center; }
         
-        .logos-container { display: flex; gap: 10px; align-items: center; }
+        .logos-container { display: flex; gap: 8px; align-items: center; }
         
+        /* LOGO RER : Carré noir, intérieur blanc, caractères noirs */
         .logo-rer {
-            background: var(--blue-rer);
-            border-radius: 50%;
-            width: 45px;
-            height: 45px;
+            background: white; /* Rempli le blanc */
+            border: 4.5px solid var(--dark); /* Le carré noir qui entoure */
+            border-radius: 8px;
+            width: 41px; /* Ajusté pour que le total fasse 50px avec la bordure */
+            height: 41px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 900;
-            color: white;
+            color: var(--dark); /* Caractères RER noirs */
         }
         
+        /* LOGO A : Carré rouge, texte blanc */
         .logo-a {
             background: var(--red-a);
             border-radius: 10px;
-            width: 45px;
-            height: 45px;
+            width: 50px;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 900;
             color: white;
         }
         
         .station-info { margin-left: 20px; }
-        .station-name { font-size: 24px; font-weight: bold; line-height: 1; }
-        .direction-info { font-size: 14px; color: var(--red-a); margin-top: 4px; }
+        .station-name { font-size: 26px; font-weight: bold; line-height: 1; letter-spacing: -0.5px; }
+        .direction-info { font-size: 15px; color: var(--red-a); margin-top: 4px; font-weight: bold; }
         
-        .clock { background: var(--dark); color: white; padding: 10px 20px; border-radius: 8px; font-size: 28px; }
+        .clock { background: var(--dark); color: white; padding: 10px 22px; border-radius: 8px; font-size: 28px; font-weight: bold; }
         
-        /* TABLEAU DE BORD */
         .board { flex-grow: 1; padding: 20px; overflow-y: auto; }
         
         .row { 
             display: grid; 
-            grid-template-columns: 100px 1fr 100px 160px; 
+            grid-template-columns: 100px 1fr 100px 180px; 
             align-items: center; 
             padding: 18px 0; 
             border-bottom: 2px solid #ddd; 
         }
         
-        .mission { background: #ddd; padding: 5px; border-radius: 4px; text-align: center; font-weight: bold; font-family: monospace; }
-        .dest { font-size: 26px; font-weight: 700; text-transform: uppercase; padding-left: 15px; }
+        .mission { background: #ddd; padding: 6px; border-radius: 4px; text-align: center; font-weight: bold; font-family: monospace; font-size: 16px; }
+        .dest { font-size: 28px; font-weight: 700; text-transform: uppercase; padding-left: 15px; }
         
         .platform {
             text-align: center;
             border-left: 1px solid #ccc;
         }
-        .platform-label { font-size: 10px; text-transform: uppercase; color: #999; display: block; }
-        .platform-num { font-weight: bold; font-size: 28px; color: var(--dark); }
+        .platform-label { font-size: 11px; text-transform: uppercase; color: #888; display: block; margin-bottom: -4px; }
+        .platform-num { font-weight: bold; font-size: 30px; color: var(--dark); }
 
         .time { 
             background: var(--dark); 
             color: var(--yellow); 
-            border-radius: 6px; 
+            border-radius: 8px; 
             text-align: center; 
-            padding: 8px; 
-            min-width: 140px;
-            min-height: 50px;
+            padding: 10px; 
+            min-width: 150px;
+            min-height: 55px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             margin-left: 15px;
         }
-        .time .val { font-size: 32px; font-weight: bold; display: block; line-height: 0.8; }
-        .time .unit { font-size: 12px; }
-        .time .full-text { font-size: 16px; font-weight: bold; line-height: 1.1; text-transform: uppercase; }
+        .time .val { font-size: 36px; font-weight: bold; display: block; line-height: 0.8; }
+        .time .unit { font-size: 14px; margin-top: 2px; }
+        .time .full-text { font-size: 18px; font-weight: bold; line-height: 1.1; text-transform: uppercase; }
 
         footer { background: #333; color: #0f0; padding: 10px 20px; font-family: monospace; font-size: 11px; }
     </style>
@@ -111,7 +112,7 @@
 </header>
 
 <div class="board" id="board">
-    <div style="text-align:center; margin-top:100px; color:#999;" id="status">Initialisation du flux...</div>
+    <div style="text-align:center; margin-top:100px; color:#999;" id="status">Chargement du flux...</div>
 </div>
 
 <footer id="debug">Prêt.</footer>
@@ -121,7 +122,8 @@
     const MONITORING_REF = 'STIF:StopArea:SP:70640:'; 
 
     function updateClock() {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
     }
 
     async function fetchSchedules() {
