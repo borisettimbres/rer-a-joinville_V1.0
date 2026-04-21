@@ -49,7 +49,7 @@
 </header>
 
 <div class="board" id="board">
-    <div style="text-align:center; margin-top:100px; color:#999;" id="status">Chargement...</div>
+    <div style="text-align:center; margin-top:100px; color:#999;" id="status">Chargement du flux...</div>
 </div>
 
 <footer id="debug">Prêt.</footer>
@@ -90,13 +90,9 @@
         let trains = visits
             .map(v => v.MonitoredVehicleJourney)
             .filter(j => {
-                // 1. Filtre Ligne A
                 const line = j.LineRef?.value || "";
                 if (!line.includes('C01742') && line !== 'A') return false;
 
-                // 2. CLÉ DE DÉDUPLICATION RENFORCÉE
-                // On utilise la destination + l'heure théorique (AimedDepartureTime)
-                // C'est l'unique moyen d'être sûr que c'est le même train physique
                 const aimedTime = j.MonitoredCall.AimedDepartureTime;
                 const destName = j.DestinationName[0].value;
                 const uniqueKey = `${destName}_${aimedTime}`;
@@ -104,7 +100,6 @@
                 if (seen.has(uniqueKey)) return false;
                 seen.add(uniqueKey);
 
-                // 3. Filtre Direction Paris
                 const d = destName.toLowerCase();
                 return !d.includes('boissy') && !d.includes('varenne');
             })
@@ -125,12 +120,19 @@
             const mission = j.JourneyNote?.[0]?.value || "----";
             const time = new Date(j.MonitoredCall.ExpectedDepartureTime || j.MonitoredCall.AimedDepartureTime);
             const diff = Math.round((time - now) / 60000);
+            
+            // --- NOUVELLE LOGIQUE D'AFFICHAGE ---
+            const isAtStop = j.MonitoredCall.VehicleAtStop === true || j.MonitoredCall.VehicleAtStop === "true";
 
             let timeHTML = '';
-            if (diff <= 0) {
-                // Affichage uniforme pour "À l'approche"
+            if (isAtStop) {
+                // Si le train est à quai
+                timeHTML = `<span class="full-text">À quai</span>`;
+            } else if (diff <= 0) {
+                // Si le train arrive
                 timeHTML = `<span class="full-text">À l'approche</span>`;
             } else {
+                // Affichage des minutes
                 timeHTML = `<span class="val">${diff}</span><span class="unit">min</span>`;
             }
 
