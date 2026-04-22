@@ -38,62 +38,80 @@
         
         .clock { background: var(--dark); color: var(--yellow); padding: 10px 22px; border-radius: 8px; font-size: 28px; font-weight: bold; }
         
-        .board { flex-grow: 1; padding: 0 20px; display: flex; flex-direction: column; overflow: hidden; }
+        .board { flex-grow: 1; padding: 0 20px; overflow: hidden; display: flex; flex-direction: column; }
         
+        /* --- NOUVELLE LOGIQUE DE LIGNE --- */
         .row { 
             display: grid; 
             grid-template-columns: 100px 1fr 220px 100px; 
             align-items: center; 
             padding: 15px 0; 
-            border-bottom: 2px solid #ddd; 
+            border-bottom: 2px solid #ddd;
             background: var(--bg-page);
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.6s ease-in, opacity 0.5s ease-in, height 0.6s ease, padding 0.6s ease, margin 0.6s ease;
+            height: 70px; /* Hauteur fixe pour une transition fluide */
+            overflow: hidden;
         }
+
+        /* Animation de sortie : glisse à gauche et s'écrase pour faire remonter les autres */
+        .row.exit-left {
+            transform: translateX(-120%);
+            opacity: 0;
+            height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-bottom: -2px; /* Compense la bordure */
+            border-bottom: none;
+        }
+
+        /* Animation d'entrée pour les nouvelles lignes du bas */
+        @keyframes slideInFromBottom {
+            0% { transform: translateY(50px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .row.new-row {
+            animation: slideInFromBottom 0.5s ease-out forwards;
+        }
+
+        .mission { background: #ddd; padding: 6px; border-radius: 4px; text-align: center; font-weight: bold; font-family: monospace; font-size: 16px; }
+        .dest { font-size: 28px; font-weight: 700; padding-left: 15px; color: var(--dark); }
         
-        /* --- NOUVELLES ANIMATIONS --- */
-        
-        /* Apparition (remontée du bas) */
-        @keyframes slideUpRow {
-            0% { transform: translateY(100vh); }
-            100% { transform: translateY(0); }
+        @keyframes slideIn {
+            0% { transform: translateY(10px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
         }
-
-        .row-animate-in {
-            animation: slideUpRow 0.8s cubic-bezier(0.23, 1, 0.32, 1) both;
-        }
-
-        /* Disparition (glissement vers la gauche) */
-        @keyframes slideOutLeft {
-            0% { transform: translateX(0); opacity: 1; }
-            100% { transform: translateX(-100%); opacity: 0; }
-        }
-
-        .row-exit {
-            animation: slideOutLeft 0.6s ease-in forwards !important;
-        }
-
-        /* Délais successifs pour l'effet de cascade lors du premier chargement */
-        .row:nth-child(1) { animation-delay: 0.05s; }
-        .row:nth-child(2) { animation-delay: 0.1s; }
-        .row:nth-child(3) { animation-delay: 0.15s; }
-        .row:nth-child(4) { animation-delay: 0.2s; }
-        .row:nth-child(5) { animation-delay: 0.25s; }
-
-        /* --- ANIMATIONS EXISTANTES PRÉSERVÉES --- */
-        @keyframes slideIn { 0% { transform: translateY(10px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
         @keyframes blinker { 50% { opacity: 0; } }
 
-        .time { background: var(--dark); color: var(--yellow); border-radius: 8px; text-align: center; width: 190px; height: 70px; display: flex; justify-content: center; align-items: center; justify-self: center; overflow: hidden; }
+        .time { 
+            background: var(--dark); 
+            color: var(--yellow); 
+            border-radius: 8px; 
+            text-align: center; 
+            width: 190px;
+            height: 60px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            justify-self: center;
+            overflow: hidden;
+        }
+
         .time-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
         .animate-text { animation: slideIn 0.5s ease-out; }
         .blinking { animation: blinker 1.2s linear infinite; }
+
         .time .val, .time .full-text { font-size: 32px; font-weight: bold; line-height: 0.85; text-transform: uppercase; display: block; }
         .time .unit { font-size: 14px; margin-top: 2px; text-transform: lowercase; font-weight: bold; display: block; }
 
         .platform { display: flex; justify-content: center; border-left: 1px solid #ccc; padding-left: 10px; }
-        .platform-box { background: var(--grey-bg); border: 2.5px solid var(--grey-border); border-radius: 8px; width: 70px; height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; color: var(--dark); line-height: 1; }
-        .platform-text { font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 2px; }
-        .platform-num { font-size: 28px; font-weight: 900; }
+        .platform-box {
+            background: var(--grey-bg); border: 2.5px solid var(--grey-border); border-radius: 8px;
+            width: 60px; height: 60px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-sizing: border-box; color: var(--dark); line-height: 1;
+        }
+        .platform-text { font-size: 10px; text-transform: uppercase; font-weight: bold; margin-bottom: 2px; }
+        .platform-num { font-size: 24px; font-weight: 900; }
 
         footer { background: #333; color: #0f0; padding: 10px 20px; font-family: monospace; font-size: 11px; z-index: 10; }
     </style>
@@ -114,9 +132,7 @@
     <div class="clock" id="clock">--:--</div>
 </header>
 
-<div class="board" id="board">
-    <div style="text-align:center; margin-top:100px; color:#999;">Initialisation...</div>
-</div>
+<div class="board" id="board"></div>
 
 <footer id="debug">Prêt.</footer>
 
@@ -124,7 +140,8 @@
     const API_KEY = '2pz4kMqzVx2zneQWOTnOrqM6muPE1XVO';
     const MONITORING_REF = 'STIF:StopArea:SP:70640:'; 
     let lastTimes = {};
-    let currentTrainsKeys = []; // Stocke les identifiants uniques des trains affichés
+    let currentTrainsData = []; // Stockage des trains affichés
+    let isAnimating = false;
 
     function updateClock() {
         document.getElementById('clock').innerText = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
@@ -142,6 +159,8 @@
     }
 
     async function fetchSchedules() {
+        if (isAnimating) return; // Évite de casser l'animation de sortie
+
         const debug = document.getElementById('debug');
         const url = `https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=${MONITORING_REF}`;
         const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
@@ -154,14 +173,14 @@
             const data = await response.json();
             const visits = data.Siri?.ServiceDelivery?.StopMonitoringDelivery?.[0]?.MonitoredStopVisit || [];
             
-            processData(visits);
+            processUpdate(visits);
             debug.innerText = `> Flux OK - ${new Date().toLocaleTimeString()}`;
         } catch (e) {
             debug.innerText = "> ÉCHEC : " + e.message;
         }
     }
 
-    function processData(visits) {
+    function processUpdate(visits) {
         const now = new Date();
         const seen = new Set();
         
@@ -187,42 +206,54 @@
             })
             .slice(0, 7);
 
-        const newKeys = newTrains.map(t => `${t.JourneyNote?.[0]?.value || '----'}_${t.MonitoredCall.AimedDepartureTime}`);
+        // Détection du départ du premier train
+        if (currentTrainsData.length > 0 && newTrains.length > 0) {
+            const oldFirstId = currentTrainsData[0].FramedVehicleJourneyRef?.DatedVehicleJourneyRef;
+            const newFirstId = newTrains[0].FramedVehicleJourneyRef?.DatedVehicleJourneyRef;
 
-        // Détection : est-ce que le premier train a changé (est parti) ?
-        if (currentTrainsKeys.length > 0 && newKeys.length > 0 && currentTrainsKeys[0] !== newKeys[0]) {
-            const firstRow = document.querySelector('.row');
-            if (firstRow) {
-                firstRow.classList.add('row-exit');
-                // On attend la fin de l'anim (600ms) avant de rerendre le tableau
-                setTimeout(() => {
-                    render(newTrains);
-                    currentTrainsKeys = newKeys;
-                }, 600);
+            if (oldFirstId !== newFirstId) {
+                triggerDepartureAnimation(newTrains);
                 return;
             }
         }
 
         render(newTrains);
-        currentTrainsKeys = newKeys;
+    }
+
+    function triggerDepartureAnimation(newTrains) {
+        const firstRow = document.querySelector('.row');
+        if (firstRow) {
+            isAnimating = true;
+            firstRow.classList.add('exit-left');
+            
+            // On attend la fin de l'animation CSS (0.6s) pour reconstruire le DOM
+            setTimeout(() => {
+                render(newTrains);
+                isAnimating = false;
+            }, 600);
+        } else {
+            render(newTrains);
+        }
     }
 
     function render(trains) {
         const board = document.getElementById('board');
         const now = new Date();
+        let html = '';
 
         if (trains.length === 0) {
             board.innerHTML = '<div style="text-align:center;margin-top:100px;color:#999;">Aucun train détecté.</div>';
+            currentTrainsData = [];
             return;
         }
 
-        let html = '';
         trains.forEach((j, index) => {
             const dest = formatDestination(j.DestinationName[0].value);
             const mission = j.JourneyNote?.[0]?.value || "----";
             const time = new Date(j.MonitoredCall.ExpectedDepartureTime || j.MonitoredCall.AimedDepartureTime);
             const diff = Math.round((time - now) / 60000);
-            const uniqueKeyForMem = `${mission}_${j.MonitoredCall.AimedDepartureTime}`;
+            const aimedTime = j.MonitoredCall.AimedDepartureTime;
+            const uniqueKeyForMem = `${mission}_${aimedTime}`;
 
             const platformData = j.MonitoredCall.DeparturePlatformName;
             const platform = (platformData && typeof platformData === 'object') ? platformData.value : (platformData || "2");
@@ -244,16 +275,20 @@
                 timeHTML = `<span class="val">${diff}</span><span class="unit">min</span>`;
             }
 
+            // Animation de mise à jour des minutes (slideIn interne)
             const hasChanged = lastTimes[uniqueKeyForMem] !== undefined && lastTimes[uniqueKeyForMem] !== currentStatus;
-            const animTextClass = hasChanged ? 'animate-text' : '';
+            const animClass = hasChanged ? 'animate-text' : '';
             lastTimes[uniqueKeyForMem] = currentStatus;
 
+            // Détection si c'est un nouveau train qui arrive en bas de liste
+            const isNewRow = !currentTrainsData.some(old => old.FramedVehicleJourneyRef?.DatedVehicleJourneyRef === j.FramedVehicleJourneyRef?.DatedVehicleJourneyRef);
+
             html += `
-                <div class="row row-animate-in">
+                <div class="row ${isNewRow ? 'new-row' : ''}" data-id="${j.FramedVehicleJourneyRef?.DatedVehicleJourneyRef}">
                     <div class="mission">${mission}</div>
                     <div class="dest">${dest}</div>
                     <div class="time">
-                        <div class="time-wrapper ${statusClass} ${animTextClass}">
+                        <div class="time-wrapper ${statusClass} ${animClass}">
                             ${timeHTML}
                         </div>
                     </div>
@@ -265,7 +300,9 @@
                     </div>
                 </div>`;
         });
+
         board.innerHTML = html;
+        currentTrainsData = trains;
     }
 
     setInterval(updateClock, 1000);
