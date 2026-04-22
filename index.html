@@ -58,7 +58,6 @@
         }
         @keyframes blinker { 50% { opacity: 0; } }
 
-        /* Animation uniquement sur le contenu texte */
         .animate-text { 
             display: flex;
             flex-direction: column;
@@ -88,7 +87,6 @@
             text-transform: uppercase;
         }
         
-        /* Affichage de "min" en dessous */
         .time .unit { 
             font-size: 14px; 
             margin-top: 4px; 
@@ -126,7 +124,7 @@
 </header>
 
 <div class="board" id="board">
-    <div style="text-align:center; margin-top:100px; color:#999;">Initialisation...</div>
+    <div style="text-align:center; margin-top:100px; color:#999;">Initialisation du SIEL...</div>
 </div>
 
 <footer id="debug">Prêt.</footer>
@@ -178,13 +176,26 @@
         let trains = visits
             .map(v => v.MonitoredVehicleJourney)
             .filter(j => {
+                // 1. Filtre Ligne A
                 const line = j.LineRef?.value || "";
                 if (!line.includes('C01742') && line !== 'A') return false;
+
+                // 2. Dédoublonnage
                 const aimedTime = j.MonitoredCall.AimedDepartureTime;
                 const destName = j.DestinationName[0].value;
                 const uniqueKey = `${destName}_${aimedTime}`;
                 if (seen.has(uniqueKey)) return false;
                 seen.add(uniqueKey);
+
+                // 3. Calcul du temps pour le filtre anti-fantôme
+                const expTime = new Date(j.MonitoredCall.ExpectedDepartureTime || j.MonitoredCall.AimedDepartureTime);
+                const diffMs = expTime - now;
+                const isAtStop = j.MonitoredCall.VehicleAtStop === true || j.MonitoredCall.VehicleAtStop === "true";
+
+                // BUG FIX : Si le train est passé depuis plus de 15 secondes et n'est plus à quai, on le supprime
+                if (!isAtStop && diffMs < -15000) return false;
+
+                // 4. Filtre Direction Paris
                 return !destName.toLowerCase().includes('boissy') && !destName.toLowerCase().includes('varenne');
             })
             .sort((a, b) => {
@@ -194,7 +205,7 @@
             });
 
         if (trains.length === 0) {
-            board.innerHTML = '<div style="text-align:center;margin-top:100px;color:#999;">Aucun train détecté.</div>';
+            board.innerHTML = '<div style="text-align:center;margin-top:100px;color:#999;">Aucun train détecté vers Paris.</div>';
             return;
         }
 
@@ -205,7 +216,7 @@
             const time = new Date(j.MonitoredCall.ExpectedDepartureTime || j.MonitoredCall.AimedDepartureTime);
             const diff = Math.round((time - now) / 60000);
             const aimedTime = j.MonitoredCall.AimedDepartureTime;
-            const uniqueKey = `${mission}_${aimedTime}`;
+            const uniqueKeyForMem = `${mission}_${aimedTime}`;
 
             const platformData = j.MonitoredCall.DeparturePlatformName;
             const platform = (platformData && typeof platformData === 'object') ? platformData.value : (platformData || "2");
@@ -227,9 +238,9 @@
                 timeContent = `<span class="val">${diff}</span><span class="unit">min</span>`;
             }
 
-            const hasChanged = lastTimes[uniqueKey] !== undefined && lastTimes[uniqueKey] !== currentStatus;
+            const hasChanged = lastTimes[uniqueKeyForMem] !== undefined && lastTimes[uniqueKeyForMem] !== currentStatus;
             const changeClass = hasChanged ? 'animate-text' : '';
-            lastTimes[uniqueKey] = currentStatus;
+            lastTimes[uniqueKeyForMem] = currentStatus;
 
             html += `
                 <div class="row">
@@ -254,7 +265,7 @@
     setInterval(updateClock, 1000);
     updateClock();
     fetchSchedules();
-    setInterval(fetchSchedules, 10000);
+    setInterval(fetchSchedules, 10000); // 10 secondes
 </script>
 </body>
 </html>
