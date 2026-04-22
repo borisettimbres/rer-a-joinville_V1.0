@@ -20,7 +20,6 @@
         .header-left { display: flex; align-items: center; }
         .logos-container { display: flex; gap: 8px; align-items: center; }
         
-        /* LOGO RER : Carré blanc, contour noir, texte noir - TAILLE HARMONISÉE 48px */
         .logo-rer {
             background: white;
             border: 2.5px solid var(--dark);
@@ -33,10 +32,9 @@
             font-size: 14px;
             font-weight: 900;
             color: var(--dark);
-            box-sizing: border-box; /* Important pour inclure la bordure dans les 48px */
+            box-sizing: border-box;
         }
         
-        /* LOGO A : Carré rouge, texte blanc - TAILLE HARMONISÉE 48px */
         .logo-a {
             background: var(--red-a);
             border-radius: 8px;
@@ -144,12 +142,19 @@
         document.getElementById('clock').innerText = now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
     }
 
+    // Fonction de formatage avancée
     function formatDestination(text) {
         let clean = text.replace(/GARE DE /gi, '').trim().toLowerCase();
+        
+        // Cas spécifique : Cergy le Haut -> Cergy - Le Haut
+        if (clean === "cergy le haut") return "Cergy - Le Haut";
+        
+        // Formatage standard pour les autres destinations
         return clean.split(/([ -])/).map(part => {
             if (part === " " || part === "-") return part;
             const exceptions = ["de", "la", "le"];
-            if (exceptions.includes(part) && clean.indexOf(part) !== 0) return part;
+            // "le" prend une majuscule seulement si c'est "Le Haut" ou au début
+            if (exceptions.includes(part) && clean.indexOf(part) !== 0 && !clean.includes("le haut")) return part;
             return part.charAt(0).toUpperCase() + part.slice(1);
         }).join('');
     }
