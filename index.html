@@ -58,39 +58,48 @@
         }
         @keyframes blinker { 50% { opacity: 0; } }
 
-        .animate-text { display: inline-block; animation: slideIn 0.5s ease-out; }
+        /* Animation uniquement sur le contenu texte */
+        .animate-text { 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: slideIn 0.5s ease-out; 
+        }
         .blinking { animation: blinker 1.2s linear infinite; }
 
-        /* RECTANGLE DE TEMPS AGRANDI */
         .time { 
             background: var(--dark); 
             color: var(--yellow); 
             border-radius: 8px; 
             text-align: center; 
-            width: 190px; /* Élargi pour contenir le grand texte */
-            height: 70px; /* Légèrement plus haut */
+            width: 190px;
+            height: 70px; 
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             justify-self: center;
             overflow: hidden;
         }
 
-        /* HARMONISATION DE LA TAILLE DE POLICE */
         .time .val, .time .full-text { 
-            font-size: 30px; /* Taille identique pour chiffres et texte */
+            font-size: 32px; 
             font-weight: bold; 
-            line-height: 0.9;
+            line-height: 0.85;
             text-transform: uppercase;
         }
         
-        .time .unit { font-size: 14px; margin-top: 2px; text-transform: lowercase; }
+        /* Affichage de "min" en dessous */
+        .time .unit { 
+            font-size: 14px; 
+            margin-top: 4px; 
+            text-transform: lowercase; 
+            font-weight: bold;
+        }
 
         .platform { display: flex; justify-content: center; border-left: 1px solid #ccc; padding-left: 10px; }
         .platform-box {
             background: var(--grey-bg); border: 2.5px solid var(--grey-border); border-radius: 8px;
-            width: 70px; height: 70px; /* Aligné sur la hauteur du rectangle temps */
+            width: 70px; height: 70px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             box-sizing: border-box; color: var(--dark); line-height: 1;
         }
@@ -211,7 +220,6 @@
                 timeContent = `<span class="full-text">À quai</span>`;
             } else if (diff <= 0) {
                 currentStatus = "APPROCHE";
-                // On peut utiliser <br> si le texte est trop large pour une ligne
                 timeContent = `<span class="full-text">À l'approche</span>`;
                 extraClass = "blinking";
             } else {
@@ -228,7 +236,9 @@
                     <div class="mission">${mission}</div>
                     <div class="dest">${dest}</div>
                     <div class="time">
-                        <div class="${changeClass} ${extraClass}">${timeContent}</div>
+                        <div class="${changeClass} ${extraClass}">
+                            ${timeContent}
+                        </div>
                     </div>
                     <div class="platform">
                         <div class="platform-box">
