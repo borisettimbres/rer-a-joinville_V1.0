@@ -51,15 +51,24 @@
         .mission { background: #ddd; padding: 6px; border-radius: 4px; text-align: center; font-weight: bold; font-family: monospace; font-size: 16px; }
         .dest { font-size: 28px; font-weight: 700; padding-left: 15px; color: var(--dark); }
         
-        /* --- ANIMATION DU TEXTE UNIQUEMENT --- */
+        /* --- ANIMATIONS --- */
         @keyframes slideIn {
             0% { transform: translateY(10px); opacity: 0; }
             100% { transform: translateY(0); opacity: 1; }
         }
 
+        /* Animation de clignotement continu */
+        @keyframes blinker {
+            50% { opacity: 0; }
+        }
+
         .animate-text {
             display: inline-block;
             animation: slideIn 0.5s ease-out;
+        }
+
+        .blinking {
+            animation: blinker 1.2s linear infinite;
         }
 
         .time { 
@@ -74,7 +83,7 @@
             justify-content: center;
             align-items: center;
             justify-self: center;
-            overflow: hidden; /* Pour couper l'entrée du texte */
+            overflow: hidden;
         }
         .time .val { font-size: 34px; font-weight: bold; display: block; line-height: 0.8; }
         .time .unit { font-size: 13px; margin-top: 2px; }
@@ -120,8 +129,6 @@
 <script>
     const API_KEY = '2pz4kMqzVx2zneQWOTnOrqM6muPE1XVO';
     const MONITORING_REF = 'STIF:StopArea:SP:70640:'; 
-    
-    // Mémoire pour stocker les temps précédents
     let lastTimes = {};
 
     function updateClock() {
@@ -199,35 +206,34 @@
             const platform = (platformData && typeof platformData === 'object') ? platformData.value : (platformData || "2");
             const isAtStop = j.MonitoredCall.VehicleAtStop === true || j.MonitoredCall.VehicleAtStop === "true";
 
-            // Détermination de la valeur textuelle
-            let currentVal = "";
+            let currentStatus = "";
             let timeContent = "";
+            let extraClass = "";
             
             if (isAtStop) {
-                currentVal = "QUAI";
+                currentStatus = "QUAI";
                 timeContent = `<span class="full-text">À quai</span>`;
             } else if (diff <= 0) {
-                currentVal = "APPROCHE";
+                currentStatus = "APPROCHE";
                 timeContent = `<span class="full-text">À l'approche</span>`;
+                extraClass = "blinking"; // Ajout du clignotement pour l'approche
             } else {
-                currentVal = `${diff}`;
+                currentStatus = `${diff}`;
                 timeContent = `<span class="val">${diff}</span><span class="unit">min</span>`;
             }
 
-            // --- LOGIQUE D'ANIMATION ---
-            // On vérifie si la valeur a changé pour ce train précis
-            const hasChanged = lastTimes[uniqueKey] !== undefined && lastTimes[uniqueKey] !== currentVal;
-            const animationClass = hasChanged ? 'animate-text' : '';
+            // Gestion de l'animation de changement (slideIn)
+            const hasChanged = lastTimes[uniqueKey] !== undefined && lastTimes[uniqueKey] !== currentStatus;
+            const changeClass = hasChanged ? 'animate-text' : '';
             
-            // Mise à jour de la mémoire
-            lastTimes[uniqueKey] = currentVal;
+            lastTimes[uniqueKey] = currentStatus;
 
             html += `
                 <div class="row">
                     <div class="mission">${mission}</div>
                     <div class="dest">${dest}</div>
                     <div class="time">
-                        <div class="${animationClass}">${timeContent}</div>
+                        <div class="${changeClass} ${extraClass}">${timeContent}</div>
                     </div>
                     <div class="platform">
                         <div class="platform-box">
@@ -244,7 +250,7 @@
     setInterval(updateClock, 1000);
     updateClock();
     fetchSchedules();
-    setInterval(fetchSchedules, 10000); // 10 secondes
+    setInterval(fetchSchedules, 10000);
 </script>
 </body>
 </html>
