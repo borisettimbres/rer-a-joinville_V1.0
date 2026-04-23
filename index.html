@@ -44,7 +44,6 @@
         
         .board { flex-grow: 1; padding: 0 20px; overflow: hidden; display: flex; flex-direction: column; }
         
-        /* --- REINJECTION LOGIQUE D'ANIMATION DES RANGÉES --- */
         .row { 
             display: grid; 
             grid-template-columns: 100px 1fr 220px 100px; 
@@ -76,7 +75,6 @@
         .mission { background: #ddd; padding: 6px; border-radius: 4px; text-align: center; font-weight: bold; font-family: monospace; font-size: 16px; }
         .dest { font-size: 28px; font-weight: 700; padding-left: 15px; color: var(--dark); }
         
-        /* --- ANIMATIONS DE TEXTE --- */
         @keyframes slideIn {
             0% { transform: translateY(10px); opacity: 0; }
             100% { transform: translateY(0); opacity: 1; }
@@ -95,7 +93,6 @@
         .platform-text { font-size: 10px; text-transform: uppercase; font-weight: bold; }
         .platform-num { font-size: 24px; font-weight: 900; }
 
-        /* --- ENCART TRAFIC (CONSERVÉ) --- */
         .info-trafic { background: var(--info-bg); height: 110px; display: flex; align-items: center; padding: 0 30px; position: relative; z-index: 5; border-top: 2px solid #b8c5ce; overflow: hidden; }
         .info-icon-container { margin-right: 35px; flex-shrink: 0; display: flex; align-items: center; }
         .icon-info-blue { width: 45px; height: 45px; background: white; border: 3px solid #1a3144; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; color: #1a3144; }
@@ -214,7 +211,6 @@
     }
 
     async function fetchSchedules() {
-        // On ne bloque pas le fetch si on anime, on laisse la logique de processUpdate décider
         const debug = document.getElementById('debug-schedules');
         const url = `https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=${MONITORING_REF}`;
         const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
@@ -237,10 +233,8 @@
             if (!line.includes('C01742') && line !== 'A') return false;
             
             const expTime = new Date(j.MonitoredCall.ExpectedDepartureTime || j.MonitoredCall.AimedDepartureTime);
-            const isAtStop = j.MonitoredCall.VehicleAtStop === true || j.MonitoredCall.VehicleAtStop === "true";
             
-            // LOGIQUE DE NETTOYAGE : 
-            // Si le train est passé depuis plus de 30 secondes, on le supprime peu importe le statut API
+            // FILTRE DE NETTOYAGE : Si le train a plus de 30s de retard sur son horaire attendu, on l'enlève
             if ((now - expTime) > 30000) return false;
 
             const uniqueKey = `${j.DestinationName[0].value}_${j.MonitoredCall.AimedDepartureTime}`;
@@ -251,7 +245,6 @@
             return !destName.includes('boissy') && !destName.includes('varenne');
         }).sort((a, b) => new Date(a.MonitoredCall.ExpectedDepartureTime || a.MonitoredCall.AimedDepartureTime) - new Date(b.MonitoredCall.ExpectedDepartureTime || b.MonitoredCall.AimedDepartureTime)).slice(0, 7);
 
-        // Si le premier train a changé (départ), on anime
         if (!isAnimating && currentTrainsData.length > 0 && newTrains.length > 0) {
             const oldFirstId = currentTrainsData[0].FramedVehicleJourneyRef?.DatedVehicleJourneyRef;
             const newFirstId = newTrains[0].FramedVehicleJourneyRef?.DatedVehicleJourneyRef;
@@ -291,31 +284,26 @@
             const dest = formatDestination(j.DestinationName[0].value);
             const mission = j.JourneyNote?.[0]?.value || "----";
             const time = new Date(j.MonitoredCall.ExpectedDepartureTime || j.MonitoredCall.AimedDepartureTime);
+            
             const diffInSec = Math.round((time - now) / 1000);
             const diffInMin = Math.ceil(diffInSec / 60);
             
             const isAtStop = j.MonitoredCall.VehicleAtStop === true || j.MonitoredCall.VehicleAtStop === "true";
-            const aimedTime = j.MonitoredCall.AimedDepartureTime;
-            const uniqueKeyForMem = `${mission}_${aimedTime}`;
+            const uniqueKeyForMem = `${mission}_${j.MonitoredCall.AimedDepartureTime}`;
 
             let currentStatus = "";
             let timeHTML = "";
             let statusClass = "";
             
-            // Priorité de l'état : 
-            // 1. Si le flag API dit qu'il est à quai OU si le temps est dépassé (retard faible)
+            // LOGIQUE DE STATUT
             if (isAtStop || diffInSec <= -5) {
                 currentStatus = "QUAI";
                 timeHTML = `<span class="full-text">À quai</span>`;
-            } 
-            // 2. Si le train est à moins de 30 secondes
-            else if (diffInSec <= 30) {
+            } else if (diffInSec <= 35) {
                 currentStatus = "APPROCHE";
                 timeHTML = `<span class="full-text">À l'approche</span>`;
                 statusClass = "blinking";
-            } 
-            // 3. Affichage normal en minutes
-            else {
+            } else {
                 currentStatus = `${diffInMin}`;
                 timeHTML = `<span class="val">${diffInMin}</span><span class="unit">min</span>`;
             }
@@ -366,7 +354,6 @@
     fetchGlobalTraffic();
     setInterval(fetchGlobalTraffic, 120000); 
     setInterval(rotateMessage, 10000);
-       
 </script>
 </body>
 </html>
