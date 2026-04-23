@@ -155,7 +155,7 @@
     const DEFAULT_MSG = "Attentifs, ensemble • Ne pas se séparer de ses effets personnels • Signaler tout objet abandonné ou situation inhabituelle";
 
     let currentTrainsData = [];
-    let lastTimes = {}; // Pour l'animation des chiffres
+    let lastTimes = {}; 
     let isAnimating = false;
     let displayQueue = [{text: DEFAULT_MSG, type: 'default'}];
     let queueIndex = 0;
@@ -164,7 +164,6 @@
         document.getElementById('clock').innerText = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
     }
 
-    /** LOGIQUE TRAFIC (CONSERVÉE) **/
     async function fetchGlobalTraffic() {
         const debugNode = document.getElementById('debug-traffic');
         const url = `https://prim.iledefrance-mobilites.fr/marketplace/general-message?LineRef=STIF:Line::C01742:`;
@@ -214,9 +213,8 @@
         }, 500);
     }
 
-    /** --- REINJECTION LOGIQUE PASSAGES ET ANIMATIONS --- **/
     async function fetchSchedules() {
-        if (isAnimating) return;
+        // On ne bloque pas le fetch si on anime, on laisse la logique de processUpdate décider
         const debug = document.getElementById('debug-schedules');
         const url = `https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=${MONITORING_REF}`;
         const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
@@ -233,24 +231,28 @@
     function processUpdate(visits) {
         const now = new Date();
         const seen = new Set();
+        
         let newTrains = visits.map(v => v.MonitoredVehicleJourney).filter(j => {
             const line = j.LineRef?.value || "";
             if (!line.includes('C01742') && line !== 'A') return false;
-            const uniqueKey = `${j.DestinationName[0].value}_${j.MonitoredCall.AimedDepartureTime}`;
-            if (seen.has(uniqueKey)) return false;
-            seen.add(uniqueKey);
+            
             const expTime = new Date(j.MonitoredCall.ExpectedDepartureTime || j.MonitoredCall.AimedDepartureTime);
             const isAtStop = j.MonitoredCall.VehicleAtStop === true || j.MonitoredCall.VehicleAtStop === "true";
             
-            // Correction : supprimer les trains passés (plus de 15s de retard) sauf s'ils sont encore à quai
-            if (!isAtStop && (expTime - now) < -15000) return false;
+            // LOGIQUE DE NETTOYAGE : 
+            // Si le train est passé depuis plus de 30 secondes, on le supprime peu importe le statut API
+            if ((now - expTime) > 30000) return false;
+
+            const uniqueKey = `${j.DestinationName[0].value}_${j.MonitoredCall.AimedDepartureTime}`;
+            if (seen.has(uniqueKey)) return false;
+            seen.add(uniqueKey);
             
             const destName = j.DestinationName[0].value.toLowerCase();
             return !destName.includes('boissy') && !destName.includes('varenne');
         }).sort((a, b) => new Date(a.MonitoredCall.ExpectedDepartureTime || a.MonitoredCall.AimedDepartureTime) - new Date(b.MonitoredCall.ExpectedDepartureTime || b.MonitoredCall.AimedDepartureTime)).slice(0, 7);
 
-        // Détection de départ pour animation de sortie
-        if (currentTrainsData.length > 0 && newTrains.length > 0) {
+        // Si le premier train a changé (départ), on anime
+        if (!isAnimating && currentTrainsData.length > 0 && newTrains.length > 0) {
             const oldFirstId = currentTrainsData[0].FramedVehicleJourneyRef?.DatedVehicleJourneyRef;
             const newFirstId = newTrains[0].FramedVehicleJourneyRef?.DatedVehicleJourneyRef;
             if (oldFirstId !== newFirstId) {
@@ -258,7 +260,8 @@
                 return;
             }
         }
-        render(newTrains);
+        
+        if (!isAnimating) render(newTrains);
     }
 
     function triggerDepartureAnimation(newTrains) {
@@ -266,7 +269,10 @@
         if (firstRow) {
             isAnimating = true;
             firstRow.classList.add('exit-left');
-            setTimeout(() => { render(newTrains); isAnimating = false; }, 600);
+            setTimeout(() => { 
+                isAnimating = false; 
+                render(newTrains); 
+            }, 600);
         } else { render(newTrains); }
     }
 
@@ -274,13 +280,20 @@
         const board = document.getElementById('board');
         const now = new Date();
         let html = '';
-        if (trains.length === 0) { board.innerHTML = '<div style="text-align:center;margin-top:100px;color:#999;">Aucun train détecté.</div>'; currentTrainsData = []; return; }
         
-        trains.forEach((j, index) => {
+        if (trains.length === 0) { 
+            board.innerHTML = '<div style="text-align:center;margin-top:100px;color:#999;">Aucun train détecté.</div>'; 
+            currentTrainsData = []; 
+            return; 
+        }
+        
+        trains.forEach((j) => {
             const dest = formatDestination(j.DestinationName[0].value);
             const mission = j.JourneyNote?.[0]?.value || "----";
             const time = new Date(j.MonitoredCall.ExpectedDepartureTime || j.MonitoredCall.AimedDepartureTime);
-            const diff = Math.round((time - now) / 60000);
+            const diffInSec = Math.round((time - now) / 1000);
+            const diffInMin = Math.ceil(diffInSec / 60);
+            
             const isAtStop = j.MonitoredCall.VehicleAtStop === true || j.MonitoredCall.VehicleAtStop === "true";
             const aimedTime = j.MonitoredCall.AimedDepartureTime;
             const uniqueKeyForMem = `${mission}_${aimedTime}`;
@@ -289,19 +302,24 @@
             let timeHTML = "";
             let statusClass = "";
             
-            if (isAtStop) {
+            // Priorité de l'état : 
+            // 1. Si le flag API dit qu'il est à quai OU si le temps est dépassé (retard faible)
+            if (isAtStop || diffInSec <= -5) {
                 currentStatus = "QUAI";
                 timeHTML = `<span class="full-text">À quai</span>`;
-            } else if (diff <= 0) {
+            } 
+            // 2. Si le train est à moins de 30 secondes
+            else if (diffInSec <= 30) {
                 currentStatus = "APPROCHE";
                 timeHTML = `<span class="full-text">À l'approche</span>`;
                 statusClass = "blinking";
-            } else {
-                currentStatus = `${diff}`;
-                timeHTML = `<span class="val">${diff}</span><span class="unit">min</span>`;
+            } 
+            // 3. Affichage normal en minutes
+            else {
+                currentStatus = `${diffInMin}`;
+                timeHTML = `<span class="val">${diffInMin}</span><span class="unit">min</span>`;
             }
 
-            // Animation des chiffres si le temps change
             const hasChanged = lastTimes[uniqueKeyForMem] !== undefined && lastTimes[uniqueKeyForMem] !== currentStatus;
             const animClass = hasChanged ? 'animate-text' : '';
             lastTimes[uniqueKeyForMem] = currentStatus;
@@ -344,10 +362,11 @@
     setInterval(updateClock, 1000);
     updateClock();
     fetchSchedules();
-    setInterval(fetchSchedules, 10000); // 10s comme l'ancienne version
+    setInterval(fetchSchedules, 10000); 
     fetchGlobalTraffic();
     setInterval(fetchGlobalTraffic, 120000); 
     setInterval(rotateMessage, 10000);
+       
 </script>
 </body>
 </html>
