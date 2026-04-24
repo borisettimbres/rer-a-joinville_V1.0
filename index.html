@@ -6,23 +6,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@700&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --red-a: #c0333a; 
-            --dark: #000000;
-            --yellow: #fbc02d; 
-            --bg-page: #f5f5f5;
-            --grey-border: #666;
-            --grey-bg: #eee;
-            --info-bg: #d0dce4;
-            --info-text: #1a3144;
-            --ok-color: #00ff00;
-            --ko-color: #ff4444;
+            --red-a: #c0333a; --dark: #000; --yellow: #fbc02d; --bg-page: #f5f5f5;
+            --grey-border: #666; --grey-bg: #eee; --info-bg: #d0dce4; --info-text: #1a3144;
+            --ok-color: #00ff00; --ko-color: #ff4444;
+            /* Couleurs lignes métro */
+            --m1: #ffbe00; --m2: #0055c8; --m4: #bb0050; --m14: #62259d;
         }
         body { background: var(--bg-page); font-family: 'Cabin', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
         header { background: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 8px solid var(--red-a); z-index: 10; }
         .header-left { display: flex; align-items: center; }
         .logos-container { display: flex; gap: 8px; align-items: center; }
-        .logo-rer { background: white; border: 2.5px solid var(--dark); border-radius: 8px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; color: var(--dark); box-sizing: border-box; }
+        .logo-rer { background: white; border: 2.5px solid var(--dark); border-radius: 8px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; box-sizing: border-box; }
         .logo-a { background: var(--red-a); border-radius: 8px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 900; color: white; box-sizing: border-box; }
         .station-info { margin-left: 15px; }
         .station-name { font-size: 26px; font-weight: bold; color: var(--dark); }
@@ -31,26 +26,14 @@
         
         .board { flex-grow: 1; padding: 0 20px; overflow: hidden; display: flex; flex-direction: column; }
         
-        .row { 
-            display: grid; 
-            grid-template-columns: 100px 1fr 240px 100px; 
-            align-items: center; 
-            padding: 15px 0; 
-            border-bottom: 2px solid #ddd;
-            height: 70px;
-            transition: all 0.6s ease;
-        }
+        .row { display: grid; grid-template-columns: 100px 1fr 240px 100px; align-items: center; padding: 15px 0; border-bottom: 2px solid #ddd; height: 70px; transition: all 0.6s ease; }
         .row.exit-left { transform: translateX(-120%); opacity: 0; }
 
         .mission { background: #ddd; padding: 6px; border-radius: 4px; text-align: center; font-weight: bold; font-family: monospace; font-size: 16px; }
         .dest { font-size: 28px; font-weight: 700; padding-left: 15px; color: var(--dark); }
         
-        /* Animation du temps d'attente */
-        @keyframes timeJump {
-            0% { transform: translateY(15px); opacity: 0; }
-            100% { transform: translateY(0); opacity: 1; }
-        }
-        .animate-text { animation: timeJump 0.5s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
+        @keyframes timeJump { 0% { transform: translateY(15px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+        .animate-text { animation: timeJump 0.5s ease-out; }
         .blinking { animation: blinker 1.2s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.2; } }
 
@@ -63,16 +46,18 @@
         .platform-box { background: var(--grey-bg); border: 2.5px solid var(--grey-border); border-radius: 8px; width: 60px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--dark); margin-left: auto; }
         .platform-num { font-size: 24px; font-weight: 900; }
 
+        /* --- ENCART TRAFIC --- */
         .info-trafic { background: var(--info-bg); height: 110px; display: flex; align-items: center; padding: 0 30px; border-top: 2px solid #b8c5ce; overflow: hidden; }
-        .info-icon-container { margin-right: 35px; display: flex; align-items: center; gap: 10px; }
+        .info-icon-container { margin-right: 35px; display: flex; align-items: center; gap: 12px; }
         .icon-info-blue { width: 45px; height: 45px; background: white; border: 3px solid #1a3144; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; color: #1a3144; }
         
-        /* Style icône alerte jaune */
-        .logo-works { display: none; align-items: center; gap: 8px; }
+        /* Conteneur d'alerte dynamique */
+        .alert-container { display: none; align-items: center; gap: 10px; }
+        .line-badge { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 24px; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
         .logo-status-warning { width: 48px; height: 48px; background: url('image_0.png') no-repeat center; background-size: contain; }
 
         .info-scroll-container { flex-grow: 1; overflow: hidden; }
-        .info-text { font-size: 24px; font-weight: 700; color: var(--info-text); transition: all 0.5s ease; }
+        .info-text { font-size: 22px; font-weight: 700; color: var(--info-text); transition: all 0.5s ease; line-height: 1.2; }
         .slide-up-exit { transform: translateY(-100%); opacity: 0; }
         .slide-up-enter { transform: translateY(100%); opacity: 0; }
 
@@ -98,15 +83,18 @@
 <div class="info-trafic">
     <div class="info-icon-container">
         <div id="icon-standard" class="icon-info-blue">i</div>
-        <div id="icon-works" class="logo-works"><div class="logo-a">A</div><div class="logo-status-warning"></div></div>
+        <div id="alert-display" class="alert-container">
+            <div id="line-logo" class="line-badge"></div>
+            <div class="logo-status-warning"></div>
+        </div>
     </div>
     <div class="info-scroll-container">
-        <div class="info-text" id="traffic-message">Connexion au réseau PRIM...</div>
+        <div class="info-text" id="traffic-message">Initialisation...</div>
     </div>
 </div>
 
 <footer>
-    <div id="debug-schedules">> SIEL : Initialisation...</div>
+    <div id="debug-schedules">> SIEL : --</div>
     <div id="debug-traffic">API Trafic : --</div>
 </footer>
 
@@ -115,54 +103,86 @@
     const MONITORING_REF = 'STIF:StopArea:SP:70640:';
     const DEFAULT_MSG = "Attentifs, ensemble • Signaler tout objet abandonné ou situation inhabituelle";
 
+    // Configuration des lignes à surveiller dans l'encart trafic
+    const LINES_TO_MONITOR = {
+        'STIF:Line::C01742:': { name: 'A', color: '#c0333a', type: 'RER' },
+        'STIF:Line::C01371:': { name: '1', color: '#ffbe00', type: 'M' },
+        'STIF:Line::C01372:': { name: '2', color: '#0055c8', type: 'M' },
+        'STIF:Line::C01374:': { name: '4', color: '#bb0050', type: 'M' },
+        'STIF:Line::C01386:': { name: '14', color: '#62259d', type: 'M' }
+    };
+
     let currentTrains = [];
     let lastStatusMap = {}; 
     let isTransitioning = false;
-    let displayQueue = [{text: DEFAULT_MSG, type: 'default'}];
+    let displayQueue = [{text: DEFAULT_MSG, type: 'default', line: null}];
     let queueIndex = 0;
 
     function updateClock() {
         document.getElementById('clock').innerText = new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
     }
 
-    /** LOGIQUE TRAFIC (Rotation 5s) **/
+    /** LOGIQUE TRAFIC MULTI-LIGNES **/
     async function fetchTraffic() {
-        const url = `https://prim.iledefrance-mobilites.fr/marketplace/general-message?LineRef=STIF:Line::C01742:`;
+        const url = `https://prim.iledefrance-mobilites.fr/marketplace/general-message`;
         const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
         try {
             const response = await fetch(proxy, { headers: { 'apiKey': API_KEY, 'Accept': 'application/json' } });
             const data = await response.json();
             const messages = data.Siri?.ServiceDelivery?.GeneralMessageDelivery?.[0]?.InfoMessage || [];
-            let newQueue = [{text: DEFAULT_MSG, type: 'default'}];
+            
+            let newQueue = [{text: DEFAULT_MSG, type: 'default', line: null}];
+            
             messages.forEach(m => {
-                const msgs = m.Content?.Message || [];
-                const text = msgs[0]?.MessageText?.value || "";
-                if (text) newQueue.push({text: text, type: 'works'});
+                const lineRefs = m.Content?.LineRef || [];
+                lineRefs.forEach(ref => {
+                    const lineInfo = LINES_TO_MONITOR[ref.value];
+                    if (lineInfo) {
+                        const msgs = m.Content?.Message || [];
+                        const text = msgs[0]?.MessageText?.value || "";
+                        if (text && !newQueue.some(q => q.text === text)) {
+                            newQueue.push({ text: text, type: 'alert', line: lineInfo });
+                        }
+                    }
+                });
             });
+
             displayQueue = newQueue;
-            document.getElementById('debug-traffic').innerHTML = '<span class="api-ok">TRAFIC OK</span>';
+            document.getElementById('debug-traffic').innerHTML = `<span class="api-ok">TRAFIC OK (${newQueue.length - 1} ALERTES)</span>`;
         } catch (e) { console.error(e); }
     }
 
     function rotateMessage() {
         const txtNode = document.getElementById('traffic-message');
         const iconStd = document.getElementById('icon-standard');
-        const iconWorks = document.getElementById('icon-works');
+        const alertBox = document.getElementById('alert-display');
+        const lineLogo = document.getElementById('line-logo');
         
         txtNode.classList.add('slide-up-exit');
         setTimeout(() => {
             queueIndex = (queueIndex + 1) % displayQueue.length;
             const current = displayQueue[queueIndex];
+            
             txtNode.innerText = current.text;
-            iconStd.style.display = current.type === 'default' ? 'flex' : 'none';
-            iconWorks.style.display = current.type === 'works' ? 'flex' : 'none';
+            
+            if (current.type === 'default') {
+                iconStd.style.display = 'flex';
+                alertBox.style.display = 'none';
+            } else {
+                iconStd.style.display = 'none';
+                alertBox.style.display = 'flex';
+                lineLogo.innerText = current.line.name;
+                lineLogo.style.backgroundColor = current.line.color;
+                lineLogo.style.borderRadius = current.line.type === 'RER' ? '8px' : '50%';
+            }
+
             txtNode.classList.remove('slide-up-exit');
             txtNode.classList.add('slide-up-enter');
             setTimeout(() => txtNode.classList.remove('slide-up-enter'), 500);
         }, 500);
     }
 
-    /** LOGIQUE SIEL (Correctif Ghost Trains) **/
+    /** LOGIQUE SIEL RER A **/
     async function fetchSchedules() {
         const url = `https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef=${MONITORING_REF}`;
         const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
@@ -182,8 +202,7 @@
         
         const filtered = visits.map(v => v.MonitoredVehicleJourney).filter(j => {
             const expTime = new Date(j.MonitoredCall.ExpectedDepartureTime || j.MonitoredCall.AimedDepartureTime);
-            // ANTI-GHOST : Supprimer si retard > 40s
-            if ((now - expTime) > 40000) return false;
+            if ((now - expTime) > 40000) return false; // ANTI-GHOST
             
             const key = (j.FramedVehicleJourneyRef?.DatedVehicleJourneyRef) || j.MonitoredCall.AimedDepartureTime;
             if (seen.has(key)) return false;
@@ -226,9 +245,7 @@
             const diffMin = Math.ceil(diffSec / 60);
             const isAtStop = j.MonitoredCall.VehicleAtStop === true || j.MonitoredCall.VehicleAtStop === "true";
             
-            let statusKey = "";
-            let timeHtml = "";
-            let statusClass = "";
+            let statusKey = ""; let timeHtml = ""; let statusClass = "";
 
             if (isAtStop || diffSec <= 5) {
                 statusKey = "QUAI";
@@ -266,8 +283,9 @@
     setInterval(updateClock, 1000);
     fetchSchedules();
     fetchTraffic();
-    setInterval(fetchTraffic, 60000);
-    setInterval(rotateMessage, 5000); // 5 secondes pour les messages
+    setInterval(fetchTraffic, 60000); // Re-fetch traffic every 1 min
+    setInterval(rotateMessage, 5000); // 5s rotation
 </script>
 </body>
 </html>
+
